@@ -1,0 +1,35 @@
+2025-02-11T22:58:39.580565-0300 INFO Analisando sentimento do texto: string
+2025-02-11T22:58:39.581816-0300 ERROR Erro na análise de sentimento: name 'sentiment_pipeline' is not defined
+2025-02-11T22:58:43.274163-0300 INFO Analisando sentimento do texto: string
+2025-02-11T22:58:43.274667-0300 ERROR Erro na análise de sentimento: name 'sentiment_pipeline' is not defined
+2025-02-11T23:02:02.126016-0300 INFO Analisando sentimento do texto: string
+2025-02-11T23:02:02.127304-0300 ERROR Erro na análise de sentimento: name 'sentiment_pipeline' is not defined
+2025-02-11T23:02:29.372538-0300 INFO Analisando sentimento do texto: Estou muito feliz com o atendimento!
+2025-02-11T23:02:29.373096-0300 ERROR Erro na análise de sentimento: name 'sentiment_pipeline' is not defined
+2025-02-11T23:02:34.553640-0300 INFO Analisando sentimento do texto: Estou muito feliz com o atendimento!
+2025-02-11T23:02:34.554148-0300 ERROR Erro na análise de sentimento: name 'sentiment_pipeline' is not defined
+2025-02-11T23:07:08.966089-0300 INFO Analisando sentimento do texto: Atendimento foi bom
+2025-02-11T23:10:04.945684-0300 INFO Analisando sentimento do texto: the service was good
+2025-02-11T23:10:16.575242-0300 INFO Analisando sentimento do texto: the service is not good
+2025-02-11T23:10:32.703446-0300 INFO Analisando sentimento do texto: horrible
+2025-02-11T23:10:47.361999-0300 INFO Analisando sentimento do texto: bad
+2025-02-11T23:15:06.762140-0300 INFO Gerando texto para o prompt: How to improve patient care?
+2025-02-11T23:15:06.763382-0300 ERROR Erro na geração de texto: name 'text_generator' is not defined
+2025-02-12T23:19:23.856246-0300 INFO Analisando sentimento do texto: so bad
+2025-02-12T23:19:30.963836-0300 INFO Analisando sentimento do texto: perfect
+2025-02-12T23:20:33.613004-0300 INFO Gerando texto para o prompt: so good
+2025-02-12T23:20:33.613509-0300 ERROR Erro na geração de texto: name 'text_generator' is not defined
+2025-02-12T23:31:40.511780-0300 INFO Analisando sentimento do texto: maybe good
+2025-02-12T23:31:54.074765-0300 INFO Analisando sentimento do texto: its okay
+2025-02-12T23:32:01.219937-0300 INFO Analisando sentimento do texto: maybe
+2025-02-12T23:32:08.835081-0300 INFO Analisando sentimento do texto: maybe good
+2025-02-12T23:32:15.904912-0300 INFO Analisando sentimento do texto: maybe bad
+2025-02-12T23:32:33.916278-0300 INFO Analisando sentimento do texto: green
+2025-02-12T23:32:40.220727-0300 INFO Analisando sentimento do texto: red
+2025-02-12T23:32:47.296202-0300 INFO Analisando sentimento do texto: red flag
+2025-02-12T23:32:53.286352-0300 INFO Analisando sentimento do texto: blue flag
+2025-02-12T23:33:30.933100-0300 INFO Analisando sentimento do texto: so good
+2025-02-12T23:33:36.094470-0300 INFO Analisando sentimento do texto: so good
+2025-02-12T23:33:45.128238-0300 INFO Gerando texto para o prompt: so good
+2025-02-12T23:34:47.241623-0300 INFO Gerando texto para o prompt: so bad
+2025-02-13T11:25:08.974198-0300 INFO Gerando texto para o prompt: The doctor was very attentive and kind. Great experience

@@ -1,22 +1,32 @@
-from fastapi import FastAPI, status, HTTPException
+from fastapi import FastAPI, status, HTTPException, Depends
 from pydantic import BaseModel
 from enum import Enum
+import logging
+from transformers import pipeline
 
+# Configuração do log (serve para identificar possiveis erros e realizar auditorias)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger("fastapi")
+
+# Segurança - Autenticação simples via token (Testar com JWT tokens depois)
+API_TOKEN = 123
+
+# Definição de grupos de endpoints (para tags)
 class NomeGrupo(str, Enum):
-    operacoes = "Operações matemáticas simples enum"
-    teste = "Teste"
+    ia_services = "Serviços de IA"
 
 description = f"""
-    API desenvolvida durante a aula 2 (bloco c), contendo endpoints de exemplo e soma"
+    Aqui podemos verificar o esquema dos endpoints dessa API que utiliza modelos de IA para análise de sentimentos e sugestões baseadas nos feedbacks de pacientes.
 
-    - /teste: retorna uma mensagem de sucesso
-    - /soma/numero1/numero2: recebe dois números e retorna a soma
+    - /sentiment-analysis: Classifica o feedbacks como Positivo, Neutro ou Negativo.
+    - /generate-text: Sugestões de melhoria com base no feedback recebido.
 """
 
+# Criar uma instância para a classe FastAPI
 app = FastAPI(
-    title="API SATCLIN ",
+    title="API SATCLIN - IA para Feedbacks de pacientes",
     description=description,
-    version="0.1",
+    version="1.0",
     terms_of_service="http://example.com/terms/",
     contact={
         "name": "Billy Fádel, Edson Laranjeiras e Samantha Alecrim",
@@ -29,89 +39,76 @@ app = FastAPI(
     },
 )
 
+# MODELOS DE DADOS 
+class SentimentRequest(BaseModel):
+    text: str
 
-@app.get("/teste", 
-         summary="Retorna mensagem de teste", 
-         description="Retorna uma mensagem de exemplo para testar e verificar se deu certo",
-         tags=[NomeGrupo.teste])
+class SentimentResponse(BaseModel):
+    sentiment: str
+    confidence: float
 
-def hello_world():
-    return {"mensagem": "Deu certo"}
+class TextGenerationRequest(BaseModel):
+    prompt: str
+    max_length: int = 100
 
-API_TOKEN = 123
+class TextGenerationResponse(BaseModel):
+    generated_text: str
 
-# Criando um endpoint para receber dois números e retornar a soma
-# Formato 1
-# Passando o número 1 e 2 na URL
-@app.post("/soma/{numero1}/{numero2}/{api_token}", tags=[NomeGrupo.operacoes])
-def soma(numero1: int, numero2: int, api_token: int):
-    
+# AUTENTICAÇÃO SIMPLES 
+def check_api_token(api_token: int):
     if api_token != API_TOKEN:
         raise HTTPException(status_code=401, detail="API Token inválido")
     
-    if numero1 < 0 or numero2 < 0:
-        raise HTTPException(status_code=400, detail="Não é permitido números negativos")
-    
-    total = numero1 + numero2
-    
-    if total < 0:
-        raise HTTPException(status_code=400, detail="Resultado negativo")
-    
-    return {"resultado": total, "warning": "Esta versão será descontinuada em 30 dias"}
+# CONFIGURAÇÃO DOS SERVIÇOS DE IA
+sentiment_pipeline = pipeline("sentiment-analysis")
+text_generator = pipeline("text-generation", model="gpt2")  
 
-# Formato 2: passando o número 1 e 2 no corpo da requisição
-@app.post("/soma/v2", tags=[NomeGrupo.operacoes])
-def soma_formato2(numero1: int, numero2: int):
-    total = numero1 + numero2
-    return {"resultado": total}
+# Nos endpoints: define um decorador de rota, que será responsável por tratar as requisições que vão 
+# para as rotas: /sentiment-analysis/ e /generate-text/ usando o POST.
+# Nas funções da rota: recebe um texto e retorna o conteúdo , Se o sentimento é POSITIVO, NEGATIVO ou NEUTRO)
 
-# Formato 3: passando o número 1 e 2 no corpo da requisição
-
-class Numeros(BaseModel):
- numero1: int
- numero2: int
- numero3: int = 0
-
-class Resultado(BaseModel):
-    resultado: int
-
-@app.post("/soma/v3", response_model=Resultado, tags=[NomeGrupo.operacoes], status_code=status.HTTP_200_OK)
-def soma_formato3(numeros: Numeros):
-    total = numeros.numero1 + numeros.numero2 + numeros.numero3
-    return {"resultado": total}
-
-def checar_creditos(id_usuario: int):
-    return False
-
-@app.post("/divisao/{numero1}/{numero2}", tags=[NomeGrupo.operacoes])
-def divisao(numero1: int, numero2: int):
+# ENDPOINTS
+@app.post(
+    path="/v1/sentiment-analysis/{api_token}", 
+    response_model=SentimentResponse, 
+    tags=[NomeGrupo.ia_services],
+    summary="Envio de dados para Análise de Sentimento",
+    description="Endpoint que aceita requisições para envio de dados de Análise de Sentimento"
+    )
+def sentiment_analysis(request: SentimentRequest, api_token: int):
+    check_api_token(api_token)
+    logger.info(f"Analisando sentimento do texto: {request.text}")
+    try:
+        result = sentiment_pipeline(request.text)[0]
+        return SentimentResponse(sentiment=result["label"], confidence=result["score"])
+    except Exception as e:
+        logger.error(f"Erro na análise de sentimento: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erro interno ao analisar sentimento")
     
-    if numero2 == 0:
-        raise HTTPException(status_code=400, detail="Não é permitido divisão por zero")
-        
-    total = numero1 / numero2
-    
-    return {"resultado": total}
+@app.post(
+    path="/v1/generate-text/{api_token}", 
+    response_model=TextGenerationResponse, 
+    tags=[NomeGrupo.ia_services],
+    summary="Envio de dados para gerar sugestões de melhoria com base no feedback fornecido",
+    description="Endpoint que aceita requisições para envio de dados de Geração de texto"
+    )  
 
-class TipoOperacao(str, Enum):
-    soma = "soma"
-    subtracao = "subtracao"
-    multiplicacao = "multiplicacao"
-    divisao = "divisao"
+def generate_text(request: TextGenerationRequest, api_token: int):
+    check_api_token(api_token)
+    logger.info(f"Gerando texto para o prompt: {request.prompt}")
 
-@app.post("/operacao", tags=[NomeGrupo.operacoes])
-def operacao(numero: Numeros, tipo: TipoOperacao):
-    
-    if tipo == TipoOperacao.soma:
-        total = numero.numero1 + numero.numero2
-    
-    elif tipo == TipoOperacao.subtracao:
-        total = numero.numero1 - numero.numero2
-    
-    elif tipo == TipoOperacao.multiplicacao:
-        total = numero.numero1 * numero.numero2
-    
-    elif tipo == TipoOperacao.divisao:
-        total = numero.numero1 / numero.numero2
-    
-    return {"resultado": total}
+    try:
+        result = text_generator(request.prompt, max_length=request.max_length, num_return_sequences=1)
+        return TextGenerationResponse(generated_text=result[0]["generated_text"])
+    except Exception as e:
+        logger.error(f"Erro na geração de texto: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erro interno ao gerar texto")
+
+@app.get(
+    path="/v1/teste", 
+    summary="Verificar se API está funcionando",
+    description="Endpoint que aceita requisições para verificar se a API está rodando",
+    tags=[NomeGrupo.ia_services])
+
+def check_API():
+    return {"mensagem": "A API está rodando corretamente"}
